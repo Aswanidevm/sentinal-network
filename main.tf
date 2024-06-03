@@ -27,7 +27,7 @@ resource "google_compute_network_endpoint_group" "sentinel_endpoint_group" {
   name    = "sentinel-endpoint-group"
   network = google_compute_network.vpc_network.self_link
   cloud_function {
-    uri = "projects/jmc-devsecops/locations/us-central1/functions/sentinel-function"
+    uri = "projects/jmc-devsecops/locations/asia-south1/functions/sentinel-function"
   }
 }
 
