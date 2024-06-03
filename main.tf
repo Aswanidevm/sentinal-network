@@ -16,7 +16,7 @@ resource "google_compute_subnetwork" "my-subnetwork" {
   ip_cidr_range = "10.0.0.0/16"
   region        = "asia-south1"
   network       = google_compute_network.vpc_network.self_link
-  enable_flow_logs = true
+  #enable_flow_logs = true
   log_config {
     metadata = "INCLUDE_ALL_METADATA"
   }
