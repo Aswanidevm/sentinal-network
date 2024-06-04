@@ -1,0 +1,67 @@
+name: local-terraform CI
+'on':
+  push:
+    branches: ["release","main" ] 
+  pull_request:
+    branches: [ "release","main" ] 
+  workflow_dispatch:
+jobs:
+  # tf-ci:
+  #   name: terraform analysis
+  #   permissions:
+  #     contents: write
+  #     security-events: write
+  #     id-token: write
+  #     packages: write
+  #     actions: read
+  #   uses: jomcyg/gcp-github-devsecops-workflows/.github/workflows/tf-ci.yml@jmc-dev-ghworkflow
+  #   secrets: inherit
+  tf-vet:
+    name: tf-vet
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      security-events: write
+      id-token: write
+      packages: write
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Checkout vet-policy-library
+        uses: actions/checkout@v3
+        with:
+          repository: jomcyg/vet-policy-library  # Replace with the actual URL if needed
+          path: vet-policy-library  # Optional: Specify a local directory for the checkout
+          clean: true
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v1'
+        # Update the values with the output from the setup step
+        with:
+          workload_identity_provider: projects/203546026970/locations/global/workloadIdentityPools/github-jomcyg/providers/github
+          service_account: sa-jomcyggithub-gcloudauth@jmc-devsecops.iam.gserviceaccount.com
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3.1.1
+        with:
+          terraform_version: 1.8.4
+
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2' #@v2.1.0
+        with:
+          version: '>= 475.0.0'
+      - name: Install Beta Components (Quiet Mode)
+        run: gcloud --quiet components install beta
+#/vet-policies/constraints
+      - name: Terraform init-plan-vet
+        id: fmtval
+        run: |
+              pwd && ls && cd vet-policy-library && ls && cd ..
+              gcloud version
+              terraform init
+              terraform plan -out=test.tfplan
+              terraform show -json ./test.tfplan > ./tfplan.json
+              ls
+              gcloud beta terraform vet tfplan.json --policy-library=./vet-policy-library --format=json 
+              echo "done"
